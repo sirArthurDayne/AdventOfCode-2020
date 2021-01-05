@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
 type Node struct {
     destination string;
-    sources []string;
+    sources map[string]int;
 }
 
 func main() {
@@ -18,9 +19,13 @@ func main() {
     if err != nil {
         panic(err)
     }
-    //PART1.
+    //parse the data to a nodelist
     nodeList := parseData(inputData)
-    fmt.Printf("total shiny bags: %v", totalShinyBags(nodeList))
+    //PART1.
+    // fmt.Printf("total shiny bags: %v", totalShinyBags(nodeList))
+    //PART2
+    fmt.Printf("total of bags inside shiny ones: %v", totalBagsInsideShinyOnes(nodeList))
+
 }
 
 func scanLines(path string) ([]string, error) {
@@ -51,18 +56,27 @@ func parseData(inputData []string) (output []Node) {
         splitLine := strings.Split(line, "s contain ")
         destination := strings.TrimSpace(splitLine[0])
         sources := strings.Split(splitLine[1], ", ")
+        var sourceMap = make(map[string]int)
         for i:=0; i < len(sources); i++ {
+            amount := 0
+            //check for 'no other bags'
+            if !strings.Contains(sources[i], "no other") {
+                amount,_ = strconv.Atoi(string(sources[i][0]))
+            }
             sources[i] = sources[i][2:len(sources[i])]
             sources[i] = strings.ReplaceAll(sources[i],"bags","bag")
             if i == len(sources)-1 {
                 sources[i] = strings.TrimRight(sources[i], ".")
             }
+            //load into map
+            sourceMap[sources[i]] = amount
         }
-        output = append(output, Node{destination, sources})
+        output = append(output, Node{destination, sourceMap})
     }
     return
 }
 
+/**PART1**/
 func totalShinyBags(nodeList []Node) int {
     graph := make(map[string][]string)
     for _, node := range nodeList {
@@ -71,13 +85,13 @@ func totalShinyBags(nodeList []Node) int {
             //add node to addyacency list
             graph[destination] = []string{}
         }
-        for _, sou := range sources {
+        for sourceName,_ := range sources {
             //make sure all nodes are present in the adyacency list
-            if _,keyExits := graph[sou]; !keyExits {
-                graph[sou] = []string{}
+            if _,keyExits := graph[sourceName]; !keyExits {
+                graph[sourceName] = []string{}
             }
             //add destination to the souce-element list
-            graph[sou] = append(graph[sou], destination)
+            graph[sourceName] = append(graph[sourceName], destination)
         }
     }
     //traverse graph to get total(from bottom to Up)
@@ -96,6 +110,26 @@ func TraverseGraph(graph map[string][]string, root string, visited map[string]bo
     count := 1
     for _, neighbor := range graph[root] {
         count += TraverseGraph(graph,neighbor, visited)
+    }
+    return count
+}
+
+/**PART2**/
+func totalBagsInsideShinyOnes(nodeList []Node) int {
+    graph := make(map[string] map[string]int)
+    //recover each node and add it to the adyacency list
+    for _, node := range nodeList {
+        destination, sources := node.destination, node.sources
+        graph[destination] = sources
+    }
+    return bfsTraversal(graph, "shiny gold bag") -1
+}
+func bfsTraversal(graph map[string] map[string]int, root string) int {
+    //traverse the adyacency list and calculate weight
+    count := 1
+    for neighborName,neighborValue := range graph[root]{
+        // fmt.Printf("%s : %v\n",neighborName, neighborValue)
+        count += neighborValue * bfsTraversal(graph, neighborName)
     }
     return count
 }
