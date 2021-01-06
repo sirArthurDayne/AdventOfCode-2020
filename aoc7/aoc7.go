@@ -22,7 +22,7 @@ func main() {
     //parse the data to a nodelist
     nodeList := parseData(inputData)
     //PART1.
-    // fmt.Printf("total shiny bags: %v", totalShinyBags(nodeList))
+    fmt.Printf("total shiny bags: %v\n", totalShinyBags(nodeList))
     //PART2
     fmt.Printf("total of bags inside shiny ones: %v", totalBagsInsideShinyOnes(nodeList))
 
@@ -85,7 +85,7 @@ func totalShinyBags(nodeList []Node) int {
             //add node to addyacency list
             graph[destination] = []string{}
         }
-        for sourceName,_ := range sources {
+        for sourceName := range sources {
             //make sure all nodes are present in the adyacency list
             if _,keyExits := graph[sourceName]; !keyExits {
                 graph[sourceName] = []string{}
