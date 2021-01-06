@@ -18,10 +18,12 @@ func main() {
     if err != nil {
         panic(err)
     }
-    //PART 1
     instructionSet := parseInstruction(inputData)
-    fmt.Printf("total:%v\n", getAccumulator(instructionSet))
+    //PART 1
+    val,_ := getAccumulator(instructionSet)
+    fmt.Printf("total:%v\n",val)
     //PART 2
+    fmt.Printf("total:%v\n", getAccumulatorByChange(instructionSet))
 }
 
 func scanLines(path string) ([]string, error) {
@@ -74,14 +76,14 @@ func parseInstruction(input []string) (output []Instruction) {
 }
 
 
-func getAccumulator(instructionSet []Instruction) int {
+func getAccumulator(instructionSet []Instruction) (int,bool) {
     visited := make(map[int]bool)
     accumulator := 0
     jump :=1
     for index:=0; index < len(instructionSet); index +=jump {
         //check for visited instruction
         if _, wasVisited := visited[index]; wasVisited {
-            break
+            return accumulator,false
         }
         //add instruction to visited list
         visited[index] = true
@@ -100,7 +102,27 @@ func getAccumulator(instructionSet []Instruction) int {
         default: fmt.Println("ERROR: unknown instruction", action)
         }
     }
-    return accumulator
+    return accumulator,true
 }
 
+//PART2
+func getAccumulatorByChange(instructionSet []Instruction) (acc int){
+    found := false
+    modSet := instructionSet
+    for index:=0; index < len(instructionSet) && !found; index++ {
+        modSet[index]= flipInstruction(instructionSet[index])
+        acc,found = getAccumulator(modSet)
+        //reset before next iter
+        modSet[index] = flipInstruction(modSet[index])
+    }
+    return
+}
 
+func flipInstruction(current Instruction) Instruction {
+    if current.action == "jmp" {
+        current.action = "nop"
+    } else if current.action == "nop" {
+        current.action = "jmp"
+    }
+    return current
+}
