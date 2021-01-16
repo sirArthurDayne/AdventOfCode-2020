@@ -19,8 +19,9 @@ func main() {
     //part1
     // fmt.Println("1.total distance:",calculateDistance(directionsMap))
     //part2
-    fmt.Println("2.total distance:",calculateWaypointDistance(directionsMap, 10.0,1.0))
+    fmt.Println("2.total distance:",calculateWaypointDistance(directionsMap, 10,1))
 }
+
 func scanLines(path string) ([]string, error) {
 
   file, err := os.Open(path)
@@ -91,43 +92,53 @@ func calculateDistance(directions []map[string]int) int {
     return wayX+wayY
 }
 //PART2
-func calculateWaypointDistance(directions []map[string]int, wayX, wayY float64) int {
-    posX,posY := 0.0, 0.0//wayPointLocation
+func calculateWaypointDistance(directions []map[string]int, wayX, wayY int) int {
+    posX, posY := 0, 0
     for _, dir := range directions {
         for action, value := range dir {
-            fmt.Printf("action:%v,val:%v |",action,value)
             switch action {
-            case "R"://cw
-                radians := float64(value) * math.Pi / 180.0
-                newWayX := math.Floor(wayX * math.Cos(radians) - wayY * math.Sin(radians))
-                newWayY := math.Floor(wayX * math.Sin(radians) + wayY * math.Cos(radians))
-                wayX = newWayX
-                wayY = newWayY
+            case "N":
+                wayY += value
+                break
+            case "S":
+                wayY -= value
+                break
+            case "E":
+                wayX += value
+                break
+            case "W":
+                wayX -= value
                 break
             case "L"://ccw
-                degrees := (360 + value) % 360
-                switch degrees {
-                case 90:
-                    wayX, wayY = -wayY, wayX;break
-                case 180:
-                    wayX, wayY = -wayX, -wayY;break
-                case 270:
-                    wayX, wayY = wayY, -wayX;break
-                default: fmt.Println("Unknow degrees", degrees)
+                for i := 0; i < (value/90); i++ {//cool trick for dealing with orotations
+                //ccw means: swap Y with X and change X with inverse of Y
+                    temp:= wayY
+                    wayY = wayX
+                    wayX = temp * -1
                 }
                 break
-            case "F"://forward
-                posX += wayX * float64(value)
-                posY += wayY * float64(value)
+            case "R"://cw
+                for i := 0; i < (value/90); i++ {
+                //cw means: swap X with Y and change Y with inverse of X
+                    temp := wayY
+                    wayY = wayX * -1
+                    wayX = temp
+                }
                 break
-                case "N": wayY += float64(value);break
-                case "S": wayY -= float64(value);break
-                case "E": wayX += float64(value);break
-                case "W": wayX -= float64(value);break
-                default: fmt.Println("ERROR!unknow action:",action)
+            case "F":
+                posX += wayX * value
+                posY += wayY * value
+                break
+            default: fmt.Println("unknow action ",action)
             }
         }
-        fmt.Printf("w_x:%v,w_y:%v | x:%v,y:%v\n",wayX,wayY,posX,posY)
+        fmt.Println("wx:", wayX, "wayY:",wayY, "posX:", posX, "posY:",posY)
     }
-    return int(math.Abs(posX) + math.Abs(posY))
+    if posX < 0 {
+        posX *= -1
+    }
+    if posY < 0 {
+        posY *= -1
+    }
+    return posX+posY
 }
